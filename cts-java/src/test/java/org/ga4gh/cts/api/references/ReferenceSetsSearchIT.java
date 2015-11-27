@@ -58,7 +58,7 @@ public class ReferenceSetsSearchIT {
 
         final List<ReferenceSet> sets = resp.getReferenceSets();
 
-        sets.stream().forEach(this::checkRefSetConstants);
+        sets.stream().forEach(this::checkRefSetRequiredFields);
     }
 
     /**
@@ -128,9 +128,19 @@ public class ReferenceSetsSearchIT {
     private void checkRefSetConstants(ReferenceSet refSet) {
         assertThat(refSet.getAssemblyId()).isEqualTo(TestData.REFERENCESET_ASSEMBLY_ID);
         assertThat(refSet.getMd5checksum()).isEqualTo(TestData.REFERENCESET_MD5_CHECKSUM);
-        assertThat(refSet.getSourceAccessions()).isEqualTo(TestData.REFERENCESET_ACCESSION);
+        assertThat(refSet.getSourceAccessions().get(0)).isEqualTo(TestData.REFERENCESET_ACCESSION);
     }
 
+    /**
+     * Check the assembly ID, MD5 value, and accessions of a {@link ReferenceSet} is not null.
+     * @param refSet the {@link ReferenceSet}  to check
+     */
+    private void checkRefSetRequiredFields(ReferenceSet refSet) {
+        assertThat(refSet.getId()).isNotNull();
+        assertThat(refSet.getMd5checksum()).isNotNull();
+        assertThat(refSet.getSourceAccessions()).isNotEmpty();
+        assertThat(refSet.getIsDerived()).isNotNull();
+    }
     /**
      * Verify that all found references identify the right species (NCBI Taxonomy ID).
      *
