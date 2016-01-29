@@ -16,6 +16,7 @@ import org.ga4gh.models.HGVSAnnotation;
 import org.ga4gh.models.AlleleLocation;
 import org.ga4gh.models.AnalysisResult;
 import org.ga4gh.models.Impact;
+import org.ga4gh.models.OntologyTerm;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -224,5 +225,47 @@ public class VariantAnnotationsSearchIT implements CtkLogs {
         checkAllTranscriptEffects(variantAnnotations, t-> assertThat(t.getCDNALocation().getStart()).isEqualTo(cdnaStart));
         checkAllTranscriptEffects(variantAnnotations, t-> assertThat(t.getCDSLocation().getStart()).isEqualTo(cdsStart));
         checkAllTranscriptEffects(variantAnnotations, t-> assertThat(t.getProteinLocation().getStart()).isEqualTo(proteinStart));
+    }
+
+    /**
+     * Check filtering variant annotations by OntologyTerm
+     *
+     *@throws AvroRemoteException if there's a communication problem or server exception ({@link GAException})
+    */
+    @Test
+    public void checkFilteringByOntologyTerm()  throws AvroRemoteException {
+
+        // Obtain a VariantAnnotationSet from the compliance dataset.
+        final String variantAnnotationSetId = Utils.getVariantAnnotationSetId(client);
+
+        final long ot_start = 69540;
+        final long ot_end   = 69640;
+
+        //build OntologyTerm
+        final String term   = "missense_variant";
+        final String source = "SO";
+        final String id     = "SO:0001583";
+        final OntologyTerm ontologyterm = OntologyTerm.newBuilder()
+                                                      .setId(id)
+                                                      .setTerm(term)
+                                                      .setSourceName(source)
+                                                      .build();
+        final List<OntologyTerm> terms = aSingle(ontologyterm);
+
+        // Search for variant annotation records for this term
+        final SearchVariantAnnotationsRequest req =
+                SearchVariantAnnotationsRequest.newBuilder()
+                                               .setVariantAnnotationSetId(variantAnnotationSetId)
+                                               .setReferenceName(TestData.VARIANT_ANNOTATION_REFERENCE_NAME)
+                                               .setStart(ot_start)
+                                               .setEnd(ot_end)
+                                               .setEffects(terms)
+                                               .build();
+
+        final SearchVariantAnnotationsResponse resp = client.variantAnnotations.searchVariantAnnotations(req);
+
+        final List<VariantAnnotation> variantAnnotations = resp.getVariantAnnotations();
+        assertThat(variantAnnotations).hasSize(7);
+
     }
 }
